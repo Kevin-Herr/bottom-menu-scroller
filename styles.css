@@ -831,7 +831,8 @@ h2 {
   align-items: center;
   gap: 10px;
   padding: 6px 16px 6px 6px;
-  border-radius: 999px;
+  /* Concentric with the icon: its corner (27% of 32px) plus the 6px padding */
+  border-radius: 15px;
   color: var(--text);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -843,8 +844,16 @@ h2 {
     0 12px 30px -12px rgba(10, 10, 30, 0.4);
   opacity: 0;
   transform: translate(-50%, -14px) scale(0.94);
-  transition: transform 0.45s var(--ease-ios), opacity 0.25s ease;
+  transition:
+    transform 0.45s var(--ease-ios),
+    opacity 0.25s ease,
+    border-radius 0.42s var(--ease-ios);
   pointer-events: none;
+}
+
+/* Circled: a full capsule (half of the 44px height) */
+:root[data-shape="circle"] .toast {
+  border-radius: 22px;
 }
 
 .toast.show {

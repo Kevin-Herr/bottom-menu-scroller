@@ -917,7 +917,8 @@
   function placeFabInitially() {
     const b = fabBounds();
     const saved = store.get('bms.fab');
-    const x = saved ? saved.x * innerWidth : b.maxX;
+    // First visit: bottom center, where the bar itself will open.
+    const x = saved ? saved.x * innerWidth : (innerWidth - FAB) / 2;
     const y = saved ? saved.y * innerHeight : b.maxY;
     place(fabX, clamp(b.minX, b.maxX, x));
     place(fabY, clamp(b.minY, b.maxY, y));
