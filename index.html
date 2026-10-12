@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-shape="square">
+<html lang="en" data-shape="square" data-width="fit">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,8 +7,11 @@
   <meta name="theme-color" content="#07080e" media="(prefers-color-scheme: dark)">
   <title>Glass Dock</title>
   <script>
-    // Apply the saved icon shape before first paint so there is no flash.
-    try { var s = localStorage.getItem('bms.shape'); if (s === 'circle' || s === 'square') document.documentElement.dataset.shape = s; } catch (e) {}
+    // Apply saved preferences before first paint so there is no flash.
+    try {
+      var s = JSON.parse(localStorage.getItem('bms.shape')); if (s === 'circle' || s === 'square') document.documentElement.dataset.shape = s;
+      var w = JSON.parse(localStorage.getItem('bms.width')); if (w === 'fit' || w === 'full') document.documentElement.dataset.width = w;
+    } catch (e) {}
   </script>
   <!-- Icons: Font Awesome Free -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -24,15 +27,29 @@
 <body>
   <div class="wallpaper" aria-hidden="true"></div>
 
-  <!-- Icon shape toggle (top right) -->
-  <div class="shape-toggle" role="radiogroup" aria-label="Icon shape">
-    <span class="thumb" aria-hidden="true"></span>
-    <button type="button" role="radio" data-shape="square" aria-checked="true">
-      <span class="mini mini-sq" aria-hidden="true"></span>Squared
-    </button>
-    <button type="button" role="radio" data-shape="circle" aria-checked="false" tabindex="-1">
-      <span class="mini mini-ci" aria-hidden="true"></span>Circled
-    </button>
+  <!-- Display toggles (top right): icon shape, then menu width beneath it -->
+  <div class="toggles">
+    <!-- Icon shape -->
+    <div class="seg shape-toggle" role="radiogroup" aria-label="Icon shape">
+      <span class="thumb" aria-hidden="true"></span>
+      <button type="button" role="radio" data-shape="square" aria-checked="true">
+        <span class="mini mini-sq" aria-hidden="true"></span><span class="seg-label">Squared</span>
+      </button>
+      <button type="button" role="radio" data-shape="circle" aria-checked="false" tabindex="-1">
+        <span class="mini mini-ci" aria-hidden="true"></span><span class="seg-label">Circled</span>
+      </button>
+    </div>
+
+    <!-- Menu width -->
+    <div class="seg width-toggle" role="radiogroup" aria-label="Menu width">
+      <span class="thumb" aria-hidden="true"></span>
+      <button type="button" role="radio" data-width="fit" aria-checked="true">
+        <span class="mini mini-w mini-fit" aria-hidden="true"></span><span class="seg-label">Fit</span>
+      </button>
+      <button type="button" role="radio" data-width="full" aria-checked="false" tabindex="-1">
+        <span class="mini mini-w mini-full" aria-hidden="true"></span><span class="seg-label">Full</span>
+      </button>
+    </div>
   </div>
 
   <main class="content">

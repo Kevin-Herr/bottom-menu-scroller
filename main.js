@@ -91,6 +91,9 @@
   const BAR_H = 6 + HEAD_H + ROW_H;
   const BAR_MAX_W = 480;
   const BAR_EDGE = 12;
+  const BAR_R_SQUARE = 30;
+  const BAR_R_CIRCLE = 44;
+  const HEAD_PAD_R = 10;
   const TITLE_TRAVEL = 30;
   const TITLE_PAD = 20;
   const POP_GAP = 8;
@@ -111,8 +114,10 @@
   const pop = $('#menuPop');
   const dotsEl = $('.dots');
   const closeBtn = $('.panel-close');
+  const panelHead = $('.panel-head');
   const tintDark = $('.tint-dark');
   const toggle = $('.shape-toggle');
+  const widthToggle = $('.width-toggle');
   const toastEl = $('#toast');
   const live = $('#live');
 
@@ -233,6 +238,7 @@
   const press = value(1, 0.001);   // button scale (press / lift)
   const morph = value(0, 0.001);   // 0 = button, 1 = bar
   const shapeT = value(0, 0.001);  // 0 = squared, 1 = circled
+  const widthT = value(0, 0.001);  // 0 = fit (capped), 1 = full screen width
   const pageY = value(0);          // vertical position across menus (px, unbounded)
 
   // ---------------------------------------------------------------------------
@@ -293,6 +299,10 @@
   // ---------------------------------------------------------------------------
   // Layout
   // ---------------------------------------------------------------------------
+  // Visible width, excluding a desktop scrollbar (innerWidth includes it, but
+  // fixed elements are laid out inside it).
+  const viewW = () => document.documentElement.clientWidth;
+
   const safe = { t: 0, r: 0, b: 0, l: 0 };
   const probe = document.createElement('div');
   probe.style.cssText =
@@ -308,30 +318,37 @@
     safe.l = parseFloat(cs.paddingLeft) || 0;
   }
 
+  // Fit: capped at BAR_MAX_W. Full: the screen width minus the same edge margin.
+  function barWidth(t) {
+    const avail = viewW() - BAR_EDGE * 2 - safe.l - safe.r;
+    return mix(Math.min(avail, BAR_MAX_W), avail, t);
+  }
+
   function barRect() {
-    const w = Math.min(innerWidth - BAR_EDGE * 2 - safe.l - safe.r, BAR_MAX_W);
+    const w = barWidth(widthT.get());
     return {
       w,
       h: BAR_H,
-      x: (innerWidth - w) / 2,
+      x: (viewW() - w) / 2,
       y: innerHeight - BAR_H - BAR_EDGE - safe.b,
-      r: mix(30, 44, shapeT.get()),
+      r: mix(BAR_R_SQUARE, BAR_R_CIRCLE, shapeT.get()),
     };
   }
 
   function fabBounds() {
     return {
       minX: FAB_EDGE + safe.l,
-      maxX: innerWidth - FAB - FAB_EDGE - safe.r,
+      maxX: viewW() - FAB - FAB_EDGE - safe.r,
       minY: FAB_EDGE + safe.t,
       maxY: innerHeight - FAB - FAB_EDGE - safe.b,
     };
   }
 
-  function measure() {
+  // Scroll bounds are for the width the bar is heading to, so a width change
+  // can re-settle each menu while the bar is still resizing.
+  function measure({ animate = false } = {}) {
     readSafeArea();
-    const { w } = barRect();
-    panelInner.style.width = w + 'px';
+    const w = barWidth(widthT.goal);
     for (const pg of pages) {
       const n = pg.menu.items.length;
       const trackW = TRACK_PAD * 2 + n * ITEM_W + (n - 1) * ITEM_GAP;
@@ -341,13 +358,32 @@
         pg.lo = w - trackW;
         pg.hi = 0;
       }
-      place(pg.x, clamp(pg.lo, pg.hi, pg.x.get()));
+      if (animate) {
+        const to = snapX(pg, clamp(pg.lo, pg.hi, pg.x.goal));
+        if (to !== pg.x.goal) springTo(pg.x, to, { damping: 1, response: 0.42 });
+      } else {
+        place(pg.x, clamp(pg.lo, pg.hi, pg.x.get()));
+      }
       pg.titleW = pg.title.offsetWidth;
     }
   }
 
-  // Squared: title sits left. Circled: title is centered in the bar.
-  const titleX = (pg, barW) => mix(TITLE_PAD, (barW - pg.titleW) / 2, shapeT.get());
+  // Header right side: padding, then dots (6) + close (30) + two 12px gaps.
+  const HEAD_CONTROLS_W = 6 + 30 + 12 * 2;
+  // Circled: pull the dots and close button in to where the corner curve begins.
+  const headPadRight = () => mix(HEAD_PAD_R, BAR_R_CIRCLE, shapeT.get());
+
+  // 0 = title left-aligned, 1 = centered. Circled or full width centers it; taking
+  // the larger keeps it continuous while either toggle animates.
+  const titleCentering = () => Math.max(shapeT.get(), widthT.get());
+
+  // Squared + fit: title sits left. Circled or full width: title is centered in the
+  // bar, nudged left only on very narrow bars so it never runs into the dots.
+  const titleX = (pg, barW) => {
+    const room = barW - headPadRight() - HEAD_CONTROLS_W - pg.titleW - 4;
+    const centered = Math.max(TITLE_PAD, Math.min((barW - pg.titleW) / 2, room));
+    return mix(TITLE_PAD, centered, titleCentering());
+  };
 
   function snapX(pg, x) {
     if (pg.lo === pg.hi) return pg.lo;
@@ -384,7 +420,9 @@
     face.style.opacity = 1 - smoothstep(0, 0.28, travel);
     tintDark.style.opacity = travel;
     panel.style.opacity = smoothstep(0.3, 0.85, travel);
+    panelInner.style.width = bar.w + 'px';
     panelInner.style.transform = `translate(-50%, -50%) scale(${mix(0.82, 1, travel)})`;
+    panelHead.style.paddingRight = headPadRight() + 'px';
 
     const hidden = p < 0.01 && morph.goal === 0;
     panel.style.visibility = hidden ? 'hidden' : 'visible';
@@ -538,7 +576,7 @@
     }
     // 1:1 with the finger, respecting where it was grabbed.
     const b = fabBounds();
-    place(fabX, rubberClamp(g.startX + dx, b.minX, b.maxX, innerWidth));
+    place(fabX, rubberClamp(g.startX + dx, b.minX, b.maxX, viewW()));
     place(fabY, rubberClamp(g.startY + dy, b.minY, b.maxY, innerHeight));
   });
 
@@ -564,7 +602,7 @@
     springTo(fabY, toY, { damping, response: 0.45, velocity: v.y });
     springTo(press, 1, { damping: 0.7, response: 0.3 });
     dock.classList.remove('is-lifted');
-    store.set('bms.fab', { x: toX / innerWidth, y: toY / innerHeight });
+    store.set('bms.fab', { x: toX / viewW(), y: toY / innerHeight });
   }
 
   face.addEventListener('pointerup', (e) => endFabGesture(e, false));
@@ -757,7 +795,7 @@
       return;
     }
     if (!state.open) return;
-    if (dock.contains(e.target) || toggle.contains(e.target)) return;
+    if (dock.contains(e.target) || e.target.closest('.seg')) return;
     close(false);
   });
 
@@ -829,8 +867,8 @@
     const anchorY = bar.y + 6 + HEAD_H / 2;
     const left = clamp(
       BAR_EDGE,
-      innerWidth - popSize.w - BAR_EDGE,
-      mix(bar.x + tx - 8, anchorX - popSize.w / 2, shapeT.get())
+      viewW() - popSize.w - BAR_EDGE,
+      mix(bar.x + tx - 8, anchorX - popSize.w / 2, titleCentering())
     );
     const top = bar.y - POP_GAP - popSize.h;
     pop.style.visibility = 'visible';
@@ -881,34 +919,48 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Shape toggle
+  // Segmented toggles (radio groups): icon shape and menu width
   // ---------------------------------------------------------------------------
-  const shapeButtons = [...toggle.querySelectorAll('button')];
+  function segmented(el, key, apply) {
+    const buttons = [...el.querySelectorAll('button')];
+    const select = (val, opts) => {
+      for (const b of buttons) {
+        const on = b.dataset[key] === val;
+        b.setAttribute('aria-checked', on);
+        b.tabIndex = on ? 0 : -1;
+      }
+      apply(val, opts);
+    };
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b) select(b.dataset[key]);
+    });
+    el.addEventListener('keydown', (e) => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+      e.preventDefault();
+      const i = buttons.findIndex((b) => b.getAttribute('aria-checked') === 'true');
+      const next = buttons[(i + 1) % buttons.length];
+      select(next.dataset[key]);
+      next.focus();
+    });
+    return select;
+  }
 
-  function setShape(shape, { animated = true, persist = true } = {}) {
+  const setShape = segmented(toggle, 'shape', (shape, { animated = true, persist = true } = {}) => {
     root.dataset.shape = shape;
-    for (const b of shapeButtons) {
-      const on = b.dataset.shape === shape;
-      b.setAttribute('aria-checked', on);
-      b.tabIndex = on ? 0 : -1;
-    }
     const t = shape === 'circle' ? 1 : 0;
     if (animated) springTo(shapeT, t, { damping: 1, response: 0.4 });
     else place(shapeT, t);
     if (persist) store.set('bms.shape', shape);
-  }
-
-  toggle.addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (b) setShape(b.dataset.shape);
   });
 
-  toggle.addEventListener('keydown', (e) => {
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
-    e.preventDefault();
-    const next = root.dataset.shape === 'circle' ? 'square' : 'circle';
-    setShape(next);
-    shapeButtons.find((b) => b.dataset.shape === next).focus();
+  const setWidth = segmented(widthToggle, 'width', (mode, { animated = true, persist = true } = {}) => {
+    root.dataset.width = mode;
+    const t = mode === 'full' ? 1 : 0;
+    if (animated) springTo(widthT, t, { damping: 1, response: 0.42 });
+    else place(widthT, t);
+    measure({ animate: animated });
+    if (persist) store.set('bms.width', mode);
   });
 
   // ---------------------------------------------------------------------------
@@ -918,25 +970,29 @@
     const b = fabBounds();
     const saved = store.get('bms.fab');
     // First visit: bottom center, where the bar itself will open.
-    const x = saved ? saved.x * innerWidth : (innerWidth - FAB) / 2;
+    const x = saved ? saved.x * viewW() : (viewW() - FAB) / 2;
     const y = saved ? saved.y * innerHeight : b.maxY;
     place(fabX, clamp(b.minX, b.maxX, x));
     place(fabY, clamp(b.minY, b.maxY, y));
   }
 
-  addEventListener('resize', () => {
+  function onViewportChange() {
     measure();
     const b = fabBounds();
     place(fabX, clamp(b.minX, b.maxX, fabX.goal));
     place(fabY, clamp(b.minY, b.maxY, fabY.goal));
     invalidate();
-  });
+  }
+
+  addEventListener('resize', onViewportChange);
+  // A scrollbar appearing or disappearing changes the visible width without a resize event.
+  new ResizeObserver(onViewportChange).observe(document.documentElement);
 
   reduceMotion.addEventListener?.('change', invalidate);
   document.fonts?.ready.then(() => { measure(); invalidate(); });
 
   setShape(root.dataset.shape === 'circle' ? 'circle' : 'square', { animated: false, persist: false });
-  measure();
+  setWidth(root.dataset.width === 'full' ? 'full' : 'fit', { animated: false, persist: false });
   placeFabInitially();
   setActive(0, { announce: false });
   render();

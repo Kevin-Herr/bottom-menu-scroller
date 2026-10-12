@@ -108,7 +108,7 @@ body {
 .content {
   max-width: 640px;
   margin: 0 auto;
-  padding: calc(76px + env(safe-area-inset-top)) 16px calc(240px + env(safe-area-inset-bottom));
+  padding: calc(118px + env(safe-area-inset-top)) 16px calc(240px + env(safe-area-inset-bottom));
 }
 
 h1 {
@@ -229,42 +229,58 @@ h2 {
 }
 
 /* ==========================================================================
-   Shape toggle (segmented control, top right)
+   Segmented toggles: icon shape and menu width, stacked top right
    ========================================================================== */
-.shape-toggle {
+/* Stacked top right. One grid column, so both toggles take the wider one's width. */
+.toggles {
   position: fixed;
   top: calc(14px + env(safe-area-inset-top));
   right: calc(14px + env(safe-area-inset-right));
   z-index: 60;
   display: grid;
+  gap: 8px;
+}
+
+.seg {
+  position: relative;
+  display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 3px;
-  border-radius: 999px;
+  /* Follows the icon shape. Inner radius + 3px padding keeps the corners concentric. */
+  --seg-r: 9px;
+  border-radius: calc(var(--seg-r) + 3px);
   background: var(--chrome);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
     inset 0 0 0 1px var(--chrome-edge),
     0 8px 24px -10px rgba(10, 10, 30, 0.35);
+  transition: border-radius 0.42s var(--ease-ios);
 }
 
-.shape-toggle .thumb {
+/* Circled: full capsule (half of the 32px segment height) */
+:root[data-shape="circle"] .seg {
+  --seg-r: 16px;
+}
+
+.seg .thumb {
   position: absolute;
   top: 3px;
   bottom: 3px;
   left: 3px;
   width: calc(50% - 3px);
-  border-radius: 999px;
+  border-radius: var(--seg-r);
   background: var(--thumb);
   box-shadow: var(--thumb-shadow);
-  transition: transform 0.42s var(--ease-ios);
+  transition: transform 0.42s var(--ease-ios), border-radius 0.42s var(--ease-ios);
 }
 
-:root[data-shape="circle"] .shape-toggle .thumb {
+:root[data-shape="circle"] .shape-toggle .thumb,
+:root[data-width="full"] .width-toggle .thumb {
   transform: translateX(100%);
 }
 
-.shape-toggle button {
+.seg button {
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -274,7 +290,7 @@ h2 {
   height: 32px;
   padding: 0 13px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--seg-r);
   background: none;
   color: var(--text);
   font: 600 0.8125rem/1 var(--font);
@@ -284,15 +300,15 @@ h2 {
   transition: transform 0.1s ease-out, opacity 0.2s;
 }
 
-.shape-toggle button[aria-checked="false"] {
+.seg button[aria-checked="false"] {
   opacity: 0.62;
 }
 
-.shape-toggle button:active {
+.seg button:active {
   transform: scale(0.95);
 }
 
-.shape-toggle button:focus-visible {
+.seg button:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 1px;
 }
@@ -309,6 +325,31 @@ h2 {
 
 .mini-ci {
   border-radius: 50%;
+}
+
+/* Width glyph: screen edges with the bar between them */
+.mini-w {
+  position: relative;
+  width: 16px;
+  height: 11px;
+  border: 0;
+  border-inline: 1.75px solid currentColor;
+}
+
+.mini-w::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 1.5px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.mini-full::after {
+  width: calc(100% - 3px);
 }
 
 /* ==========================================================================
@@ -825,7 +866,7 @@ h2 {
 .toast {
   position: fixed;
   left: 50%;
-  top: calc(64px + env(safe-area-inset-top));
+  top: calc(110px + env(safe-area-inset-top)); /* below the stacked toggles */
   z-index: 70;
   display: flex;
   align-items: center;
@@ -871,7 +912,7 @@ h2 {
    Accessibility preferences
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .shape-toggle .thumb,
+  .seg .thumb,
   .glass-icon,
   .face-glyph g {
     transition-duration: 0.15s;
@@ -885,7 +926,7 @@ h2 {
 
 @media (prefers-reduced-transparency: reduce) {
   .dock,
-  .shape-toggle,
+  .seg,
   .toast,
   .guide,
   .menu-pop {
@@ -897,7 +938,7 @@ h2 {
     background: #2a2a34;
   }
 
-  .shape-toggle,
+  .seg,
   .toast,
   .guide {
     background: var(--bg);
@@ -922,7 +963,7 @@ h2 {
     background: rgba(255, 255, 255, 0.95);
   }
 
-  .shape-toggle,
+  .seg,
   .toast {
     box-shadow: inset 0 0 0 1.5px var(--text);
   }
