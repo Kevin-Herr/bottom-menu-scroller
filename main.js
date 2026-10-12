@@ -420,6 +420,9 @@
     face.style.opacity = 1 - smoothstep(0, 0.28, travel);
     tintDark.style.opacity = travel;
     panel.style.opacity = smoothstep(0.3, 0.85, travel);
+    // Icons only take taps once the bar has mostly grown, never while it is
+    // still a small cluster under the finger that opened it.
+    dock.classList.toggle('is-interactive', state.open && travel > 0.6);
     panelInner.style.width = bar.w + 'px';
     panelInner.style.transform = `translate(-50%, -50%) scale(${mix(0.82, 1, travel)})`;
     panelHead.style.paddingRight = headPadRight() + 'px';
@@ -543,9 +546,13 @@
   // Floating button: drag anywhere, tap to open
   // ---------------------------------------------------------------------------
   let fabGesture = null;
+  // A tap opens on its click, not on pointerup. On touch screens the click is
+  // hit-tested after pointerup; opening earlier let it land on the bar's icons.
+  let fabTapPending = false;
 
   face.addEventListener('pointerdown', (e) => {
     if (state.open || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    fabTapPending = false;
     face.setPointerCapture(e.pointerId);
     halt(fabX);
     halt(fabY);
@@ -587,7 +594,7 @@
 
     if (!g.dragging) {
       springTo(press, 1, { damping: 0.6, response: 0.3 });
-      if (!cancelled) open(false);
+      fabTapPending = !cancelled;
       return;
     }
 
@@ -607,8 +614,14 @@
 
   face.addEventListener('pointerup', (e) => endFabGesture(e, false));
   face.addEventListener('pointercancel', (e) => endFabGesture(e, true));
-  // Keyboard activation (Enter/Space); pointer taps are handled on pointerup.
-  face.addEventListener('click', (e) => { if (e.detail === 0) open(true); });
+  face.addEventListener('click', (e) => {
+    if (e.detail === 0) {
+      open(true); // keyboard (Enter / Space)
+    } else if (fabTapPending) {
+      fabTapPending = false;
+      open(false); // a tap, not the end of a drag
+    }
+  });
 
   // ---------------------------------------------------------------------------
   // Bar: swipe left/right to browse, up/down to change menus

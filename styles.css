@@ -431,7 +431,7 @@ h1 {
   pointer-events: none;
 }
 
-.dock.is-open .dock-panel {
+.dock.is-open.is-interactive .dock-panel {
   pointer-events: auto;
 }
 
