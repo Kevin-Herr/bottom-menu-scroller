@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" data-shape="square">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eef0f6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#07080e" media="(prefers-color-scheme: dark)">
+  <title>Glass Dock</title>
+  <script>
+    // Apply the saved icon shape before first paint so there is no flash.
+    try { var s = localStorage.getItem('bms.shape'); if (s === 'circle' || s === 'square') document.documentElement.dataset.shape = s; } catch (e) {}
+  </script>
+  <!-- Icons: Font Awesome Free -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Springs: Motion (motion.dev) -->
+  <script src="https://cdn.jsdelivr.net/npm/motion@12.23.12/dist/motion.js"
+          integrity="sha384-L8F6MBCtza31dSRnyAsxhtWvL4lBh6NwQ27N+T2yd16CGe7UKTa7EVaTDmAP5Wv/"
+          crossorigin="anonymous" defer></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <div class="wallpaper" aria-hidden="true"></div>
+
+  <!-- Icon shape toggle (top right) -->
+  <div class="shape-toggle" role="radiogroup" aria-label="Icon shape">
+    <span class="thumb" aria-hidden="true"></span>
+    <button type="button" role="radio" data-shape="square" aria-checked="true">
+      <span class="mini mini-sq" aria-hidden="true"></span>Squared
+    </button>
+    <button type="button" role="radio" data-shape="circle" aria-checked="false" tabindex="-1">
+      <span class="mini mini-ci" aria-hidden="true"></span>Circled
+    </button>
+  </div>
+
+  <main class="content">
+    <h1>Glass Dock</h1>
+    <p class="lede">A floating menu that starts as one button. Put it anywhere, then tap to open it.</p>
+
+    <ul class="guide">
+      <li>
+        <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
+        <div><b>Drag the button</b><span>Place it anywhere. Flick it and it glides to a stop.</span></div>
+      </li>
+      <li>
+        <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+        <div><b>Tap to open</b><span>The menu grows out of the button and docks at the bottom.</span></div>
+      </li>
+      <li>
+        <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+        <div><b>Swipe left or right</b><span>Browse the icons in the current menu.</span></div>
+      </li>
+      <li>
+        <i class="fa-solid fa-up-down" aria-hidden="true"></i>
+        <div><b>Swipe up or down</b><span>Cycle through Everyday, Create, Listen &amp; Watch, and Controls.</span></div>
+      </li>
+      <li>
+        <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
+        <div><b>Keyboard &amp; trackpad</b><span>Arrow keys move and switch menus, Esc closes. A scroll wheel or trackpad works too.</span></div>
+      </li>
+    </ul>
+
+    <h2>Recent</h2>
+    <div class="feed">
+      <article class="card"><div class="art" style="background:linear-gradient(160deg,#ffb36b,#ff5e62 55%,#7b2ff7)"></div><div class="meta"><b>Golden hour</b><span>12 photos</span></div></article>
+      <article class="card"><div class="art" style="background:radial-gradient(80% 70% at 30% 30%,#7ef0d4,transparent 70%),linear-gradient(200deg,#0fb5c9,#1d3fbb)"></div><div class="meta"><b>Tide pools</b><span>8 photos</span></div></article>
+      <article class="card"><div class="art" style="background:conic-gradient(from 210deg at 60% 40%,#ffd86b,#ff7aa8,#a17bff,#5ad1ff,#ffd86b)"></div><div class="meta"><b>Studio</b><span>24 photos</span></div></article>
+      <article class="card"><div class="art" style="background:linear-gradient(180deg,#1b2a6b,#4b3fa8 45%,#f08bb0 80%,#ffc59e)"></div><div class="meta"><b>Night drive</b><span>5 photos</span></div></article>
+      <article class="card"><div class="art" style="background:radial-gradient(60% 60% at 70% 30%,#d6ff7a,transparent 70%),linear-gradient(140deg,#2fbf71,#0d6e5a)"></div><div class="meta"><b>Greenhouse</b><span>17 photos</span></div></article>
+      <article class="card"><div class="art" style="background:linear-gradient(135deg,#f6d365,#fda085 40%,#f5576c 75%,#c43a7a)"></div><div class="meta"><b>Market day</b><span>31 photos</span></div></article>
+      <article class="card"><div class="art" style="background:radial-gradient(70% 60% at 40% 70%,#9be7ff,transparent 70%),linear-gradient(170deg,#e0eaff,#7aa2ff 60%,#3d5af1)"></div><div class="meta"><b>Snowline</b><span>9 photos</span></div></article>
+      <article class="card"><div class="art" style="background:conic-gradient(from 90deg at 30% 70%,#ff8a3d,#ffcf5c,#ff5f7e,#8e5cff,#ff8a3d)"></div><div class="meta"><b>Festival</b><span>46 photos</span></div></article>
+      <article class="card"><div class="art" style="background:linear-gradient(200deg,#2b2d42,#5c6b8a 50%,#c9b8a8)"></div><div class="meta"><b>Old town</b><span>14 photos</span></div></article>
+    </div>
+  </main>
+
+  <!-- The dock: one glass surface that is the button when collapsed and the menu bar when open -->
+  <div class="dock" id="dock">
+    <div class="tint tint-light" aria-hidden="true"></div>
+    <div class="tint tint-dark" aria-hidden="true"></div>
+
+    <button type="button" class="dock-face" id="dockFace" aria-label="Open menu" aria-expanded="false" aria-controls="dockPanel">
+      <svg class="face-glyph" viewBox="0 0 24 24" aria-hidden="true">
+        <g class="sq" stroke="rgba(255,255,255,.75)" stroke-width=".7">
+          <rect x="3" y="3" width="8" height="8" rx="2.3" fill="#4fb8f5"/>
+          <rect x="13" y="3" width="8" height="8" rx="2.3" fill="#ff5f86"/>
+          <rect x="3" y="13" width="8" height="8" rx="2.3" fill="#30c46b"/>
+          <rect x="13" y="13" width="8" height="8" rx="2.3" fill="#ff9d2e"/>
+        </g>
+        <g class="ci" stroke="rgba(255,255,255,.75)" stroke-width=".7">
+          <circle cx="7" cy="7" r="4" fill="#4fb8f5"/>
+          <circle cx="17" cy="7" r="4" fill="#ff5f86"/>
+          <circle cx="7" cy="17" r="4" fill="#30c46b"/>
+          <circle cx="17" cy="17" r="4" fill="#ff9d2e"/>
+        </g>
+      </svg>
+    </button>
+
+    <div class="dock-panel" id="dockPanel" role="group" aria-label="Menu" inert>
+      <div class="panel-inner">
+        <div class="panel-head">
+          <button type="button" class="titles" aria-haspopup="menu" aria-expanded="false" aria-controls="menuPop"></button>
+          <div class="dots" aria-hidden="true"></div>
+          <button type="button" class="panel-close" aria-label="Close menu">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="pages"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu switcher: opens from the bar's title -->
+  <div class="menu-pop" id="menuPop" role="menu" aria-label="Switch menu" inert></div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="live" aria-live="polite"></div>
+</body>
+</html>
